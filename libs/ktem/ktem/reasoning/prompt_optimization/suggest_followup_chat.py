@@ -35,8 +35,10 @@ class SuggestFollowupQuesPipeline(BaseComponent):
 
         messages = []
         for human, ai in chat_history[-3:]:
-            messages.append(HumanMessage(content=human))
-            messages.append(AIMessage(content=ai))
+            if human:
+                messages.append(HumanMessage(content=human))
+            if ai:
+                messages.append(AIMessage(content=ai))
 
         messages.append(HumanMessage(content=prompt))
 

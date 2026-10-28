@@ -5,6 +5,8 @@ activate*
 activate/*
 kotaemon-env*
 .env
+.venv/
+ktem_app_data/
 
 ### Emacs ###
 # -*- mode: gitignore; -*-

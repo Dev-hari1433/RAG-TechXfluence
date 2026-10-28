@@ -471,6 +471,8 @@ class FileIndex(BaseIndex):
 
         # transform selected id
         selected_ids: Optional[list[str]] = self._selector_ui.get_selected_ids(selected)
+        if selected_ids is not None and len(selected_ids) == 0:
+            return []
 
         retrievers = []
         for cls in self._retriever_pipeline_cls:

@@ -32,10 +32,11 @@ try:
 
     # newer versions of LightRAG needs to be initialized before using
     from lightrag.kg.shared_storage import initialize_pipeline_status
-    from lightrag.operate import (
-        _find_most_related_edges_from_entities,
-        _find_most_related_text_unit_from_entities,
-    )
+    from lightrag.operate import _find_most_related_edges_from_entities
+    try:
+        from lightrag.operate import _find_most_related_text_unit_from_entities
+    except ImportError:
+        from lightrag.operate import _find_related_text_unit_from_entities as _find_most_related_text_unit_from_entities
     from lightrag.utils import EmbeddingFunc, compute_args_hash
 
 except ImportError:
@@ -430,6 +431,8 @@ class LightRAGRetrieverPipeline(BaseFileIndexRetriever):
         }
 
     def _build_graph_search(self):
+        if not self.file_ids:
+            return None, None
         file_id = self.file_ids[0]
 
         # retrieve the graph_id from the index
@@ -441,7 +444,9 @@ class LightRAGRetrieverPipeline(BaseFileIndexRetriever):
                 .first()
             )
             graph_id = graph_id[0] if graph_id else None
-            assert graph_id, f"GraphRAG index not found for file_id: {file_id}"
+            if not graph_id:
+                print(f"Graph index not found for file_id: {file_id}")
+                return None, None
 
         _, input_path = prepare_graph_index_path(graph_id)
         input_path.mkdir(parents=True, exist_ok=True)
@@ -507,41 +512,48 @@ class LightRAGRetrieverPipeline(BaseFileIndexRetriever):
         if not self.file_ids:
             return []
 
-        graphrag_func, query_params = self._build_graph_search()
+        try:
+            res = self._build_graph_search()
+            if not res or res[0] is None:
+                return []
+            graphrag_func, query_params = res
 
-        # only local mode support graph visualization
-        if query_params.mode == "local":
-            entities, relationships, sources = asyncio.run(
-                lightrag_build_local_query_context(graphrag_func, text, query_params)
-            )
-            documents = self.format_context_records(entities, relationships, sources)
-            plot = self.plot_graph(relationships)
-            documents += [
-                RetrievedDocument(
-                    text="",
-                    metadata={
-                        "file_name": "GraphRAG",
-                        "type": "plot",
-                        "data": plot,
-                    },
-                ),
-            ]
-        else:
-            context = graphrag_func.query(text, query_params)
-
-            # account for missing ``` for closing code block
-            context += "\n```"
-
-            documents = [
-                RetrievedDocument(
-                    text=context,
-                    metadata={
-                        "file_name": "GraphRAG {} Search".format(
-                            query_params.mode.capitalize()
-                        ),
-                        "type": "table",
-                    },
+            # only local mode support graph visualization
+            if query_params.mode == "local":
+                entities, relationships, sources = asyncio.run(
+                    lightrag_build_local_query_context(graphrag_func, text, query_params)
                 )
-            ]
+                documents = self.format_context_records(entities, relationships, sources)
+                plot = self.plot_graph(relationships)
+                documents += [
+                    RetrievedDocument(
+                        text="",
+                        metadata={
+                            "file_name": "GraphRAG",
+                            "type": "plot",
+                            "data": plot,
+                        },
+                    ),
+                ]
+            else:
+                context = graphrag_func.query(text, query_params)
 
-        return documents
+                # account for missing ``` for closing code block
+                context += "\n```"
+
+                documents = [
+                    RetrievedDocument(
+                        text=context,
+                        metadata={
+                            "file_name": "GraphRAG {} Search".format(
+                                query_params.mode.capitalize()
+                            ),
+                            "type": "table",
+                        },
+                    )
+                ]
+
+            return documents
+        except Exception as e:
+            print(f"Error in LightRAG retriever: {e}")
+            return []

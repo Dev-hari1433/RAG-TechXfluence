@@ -266,10 +266,32 @@ class AnswerWithContextPipeline(BaseComponent):
                 output += out_msg.text
                 logprobs += out_msg.logprobs
                 yield Document(channel="chat", content=out_msg.text)
-        except NotImplementedError:
-            print("Streaming is not supported, falling back to normal processing")
-            output = self.llm(messages).text
-            yield Document(channel="chat", content=output)
+        except Exception as e:
+            if isinstance(e, NotImplementedError):
+                print("Streaming is not supported, falling back to normal processing")
+                output = self.llm(messages).text
+                yield Document(channel="chat", content=output)
+            else:
+                print(f"Primary LLM failed ({e}), attempting Groq fallback...")
+                fallback_llm = None
+                try:
+                    from ktem.llms.manager import llms
+                    if "groq" in llms.models():
+                        fallback_llm = llms.get("groq")
+                except Exception:
+                    pass
+
+                if fallback_llm:
+                    print("Falling back to Groq LLM...")
+                    try:
+                        for out_msg in fallback_llm.stream(messages):
+                            output += getattr(out_msg, "text", str(out_msg))
+                            yield Document(channel="chat", content=getattr(out_msg, "text", str(out_msg)))
+                    except Exception:
+                        output = fallback_llm(messages).text
+                        yield Document(channel="chat", content=output)
+                else:
+                    raise e
 
         if logprobs:
             qa_score = np.exp(np.average(logprobs))

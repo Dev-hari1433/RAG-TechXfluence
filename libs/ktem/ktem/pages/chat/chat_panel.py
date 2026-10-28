@@ -33,7 +33,8 @@ class ChatPanel(BasePage):
             likeable=True,
             bubble_full_width=False,
         )
-        with gr.Row():
+        self.input_row = gr.Row(elem_id="chat-input-row")
+        with self.input_row:
             self.text_input = gr.MultimodalTextbox(
                 interactive=True,
                 scale=20,

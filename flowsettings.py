@@ -15,6 +15,7 @@ this_dir = Path(this_file).parent
 
 # change this if your app use a different name
 KH_PACKAGE_NAME = "kotaemon_app"
+KH_APP_NAME = config("KH_APP_NAME", default="Hariharan")
 
 KH_APP_VERSION = config("KH_APP_VERSION", None)
 if not KH_APP_VERSION:
@@ -72,7 +73,7 @@ KH_FEATURE_CHAT_SUGGESTION = config(
     "KH_FEATURE_CHAT_SUGGESTION", default=False, cast=bool
 )
 KH_FEATURE_USER_MANAGEMENT = config(
-    "KH_FEATURE_USER_MANAGEMENT", default=True, cast=bool
+    "KH_FEATURE_USER_MANAGEMENT", default=False, cast=bool
 )
 KH_USER_CAN_SEE_PUBLIC = None
 KH_FEATURE_USER_MANAGEMENT_ADMIN = str(
@@ -95,13 +96,21 @@ KH_DOCSTORE = {
     "__type__": "kotaemon.storages.LanceDBDocumentStore",
     "path": str(KH_USER_DATA_DIR / "docstore"),
 }
-KH_VECTORSTORE = {
-    # "__type__": "kotaemon.storages.LanceDBVectorStore",
-    "__type__": "kotaemon.storages.ChromaVectorStore",
-    # "__type__": "kotaemon.storages.MilvusVectorStore",
-    # "__type__": "kotaemon.storages.QdrantVectorStore",
-    "path": str(KH_USER_DATA_DIR / "vectorstore"),
-}
+if config("QDRANT_URL", default=""):
+    KH_VECTORSTORE = {
+        "__type__": "kotaemon.storages.QdrantVectorStore",
+        "url": config("QDRANT_URL"),
+        "api_key": config("QDRANT_API_KEY", default=None),
+        "collection_name": config("QDRANT_COLLECTION", default="kotaemon"),
+    }
+else:
+    KH_VECTORSTORE = {
+        # "__type__": "kotaemon.storages.LanceDBVectorStore",
+        "__type__": "kotaemon.storages.ChromaVectorStore",
+        # "__type__": "kotaemon.storages.MilvusVectorStore",
+        # "__type__": "kotaemon.storages.QdrantVectorStore",
+        "path": str(KH_USER_DATA_DIR / "vectorstore"),
+    }
 KH_LLMS = {}
 KH_EMBEDDINGS = {}
 KH_RERANKINGS = {}
@@ -220,101 +229,111 @@ if config("LOCAL_MODEL", default=""):
         },
         "default": False,
     }
-    KH_EMBEDDINGS["fast_embed"] = {
+
+
+# additional LLM configurations
+if config("ANTHROPIC_API_KEY", default=""):
+    KH_LLMS["claude"] = {
         "spec": {
-            "__type__": "kotaemon.embeddings.FastEmbedEmbeddings",
-            "model_name": "BAAI/bge-base-en-v1.5",
+            "__type__": "kotaemon.llms.chats.LCAnthropicChat",
+            "model_name": "claude-3-5-sonnet-20240620",
+            "api_key": config("ANTHROPIC_API_KEY"),
         },
         "default": False,
     }
 
-# additional LLM configurations
-KH_LLMS["claude"] = {
-    "spec": {
-        "__type__": "kotaemon.llms.chats.LCAnthropicChat",
-        "model_name": "claude-3-5-sonnet-20240620",
-        "api_key": "your-key",
-    },
-    "default": False,
-}
 KH_LLMS["google"] = {
     "spec": {
         "__type__": "kotaemon.llms.chats.LCGeminiChat",
-        "model_name": "gemini-1.5-flash",
+        "model_name": config("GOOGLE_CHAT_MODEL", default="gemini-3.5-flash-lite"),
         "api_key": GOOGLE_API_KEY,
+        "transport": "rest",
     },
     "default": not IS_OPENAI_DEFAULT,
 }
-KH_LLMS["groq"] = {
-    "spec": {
-        "__type__": "kotaemon.llms.ChatOpenAI",
-        "base_url": "https://api.groq.com/openai/v1",
-        "model": "llama-3.1-8b-instant",
-        "api_key": "your-key",
-    },
-    "default": False,
-}
-KH_LLMS["cohere"] = {
-    "spec": {
-        "__type__": "kotaemon.llms.chats.LCCohereChat",
-        "model_name": "command-r-plus-08-2024",
-        "api_key": config("COHERE_API_KEY", default="your-key"),
-    },
-    "default": False,
-}
-KH_LLMS["mistral"] = {
-    "spec": {
-        "__type__": "kotaemon.llms.ChatOpenAI",
-        "base_url": "https://api.mistral.ai/v1",
-        "model": "ministral-8b-latest",
-        "api_key": config("MISTRAL_API_KEY", default="your-key"),
-    },
-    "default": False,
-}
+
+if config("GROQ_API_KEY", default=""):
+    KH_LLMS["groq"] = {
+        "spec": {
+            "__type__": "kotaemon.llms.ChatOpenAI",
+            "base_url": "https://api.groq.com/openai/v1",
+            "model": config("GROQ_CHAT_MODEL", default="openai/gpt-oss-120b"),
+            "api_key": config("GROQ_API_KEY"),
+        },
+        "default": False,
+    }
+
+if config("COHERE_API_KEY", default=""):
+    KH_LLMS["cohere"] = {
+        "spec": {
+            "__type__": "kotaemon.llms.chats.LCCohereChat",
+            "model_name": "command-r-plus-08-2024",
+            "api_key": config("COHERE_API_KEY"),
+        },
+        "default": False,
+    }
+
+if config("MISTRAL_API_KEY", default=""):
+    KH_LLMS["mistral"] = {
+        "spec": {
+            "__type__": "kotaemon.llms.ChatOpenAI",
+            "base_url": "https://api.mistral.ai/v1",
+            "model": "ministral-8b-latest",
+            "api_key": config("MISTRAL_API_KEY"),
+        },
+        "default": False,
+    }
 
 # additional embeddings configurations
-KH_EMBEDDINGS["cohere"] = {
-    "spec": {
-        "__type__": "kotaemon.embeddings.LCCohereEmbeddings",
-        "model": "embed-multilingual-v3.0",
-        "cohere_api_key": config("COHERE_API_KEY", default="your-key"),
-        "user_agent": "default",
-    },
-    "default": False,
-}
-KH_EMBEDDINGS["google"] = {
-    "spec": {
-        "__type__": "kotaemon.embeddings.LCGoogleEmbeddings",
-        "model": "models/text-embedding-004",
-        "google_api_key": GOOGLE_API_KEY,
-    },
-    "default": not IS_OPENAI_DEFAULT,
-}
-KH_EMBEDDINGS["mistral"] = {
-    "spec": {
-        "__type__": "kotaemon.embeddings.LCMistralEmbeddings",
-        "model": "mistral-embed",
-        "api_key": config("MISTRAL_API_KEY", default="your-key"),
-    },
-    "default": False,
-}
-# KH_EMBEDDINGS["huggingface"] = {
-#     "spec": {
-#         "__type__": "kotaemon.embeddings.LCHuggingFaceEmbeddings",
-#         "model_name": "sentence-transformers/all-mpnet-base-v2",
-#     },
-#     "default": False,
-# }
+if config("COHERE_API_KEY", default=""):
+    KH_EMBEDDINGS["cohere"] = {
+        "spec": {
+            "__type__": "kotaemon.embeddings.LCCohereEmbeddings",
+            "model": "embed-multilingual-v3.0",
+            "cohere_api_key": config("COHERE_API_KEY"),
+            "user_agent": "default",
+        },
+        "default": False,
+    }
 
-# default reranking models
-KH_RERANKINGS["cohere"] = {
+KH_EMBEDDINGS["fast_embed"] = {
     "spec": {
-        "__type__": "kotaemon.rerankings.CohereReranking",
-        "model_name": "rerank-v4.0-fast",
-        "cohere_api_key": config("COHERE_API_KEY", default=""),
+        "__type__": "kotaemon.embeddings.FastEmbedEmbeddings",
+        "model_name": "BAAI/bge-base-en-v1.5",
     },
     "default": True,
 }
+
+KH_EMBEDDINGS["google"] = {
+    "spec": {
+        "__type__": "kotaemon.embeddings.LCGoogleEmbeddings",
+        "model": config("GOOGLE_EMBEDDINGS_MODEL", default="models/gemini-embedding-001"),
+        "google_api_key": GOOGLE_API_KEY,
+        "transport": "rest",
+    },
+    "default": False,
+}
+
+if config("MISTRAL_API_KEY", default=""):
+    KH_EMBEDDINGS["mistral"] = {
+        "spec": {
+            "__type__": "kotaemon.embeddings.LCMistralEmbeddings",
+            "model": "mistral-embed",
+            "api_key": config("MISTRAL_API_KEY"),
+        },
+        "default": False,
+    }
+
+# default reranking models
+if config("COHERE_API_KEY", default=""):
+    KH_RERANKINGS["cohere"] = {
+        "spec": {
+            "__type__": "kotaemon.rerankings.CohereReranking",
+            "model_name": "rerank-v4.0-fast",
+            "cohere_api_key": config("COHERE_API_KEY"),
+        },
+        "default": True,
+    }
 
 KH_REASONINGS = [
     "ktem.reasoning.simple.FullQAPipeline",

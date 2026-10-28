@@ -84,6 +84,7 @@ class ConversationControl(BasePage):
                 js="""
                 () => {
                     document.body.classList.toggle('dark');
+                    document.documentElement.classList.toggle('dark');
                 }
                 """,
             )
@@ -125,6 +126,7 @@ class ConversationControl(BasePage):
                     scale=1,
                     size="sm",
                     elem_classes=["no-background", "body-text-color"],
+                    elem_id="btn-conv-rename",
                 )
                 self.btn_del = gr.Button(
                     value="",
@@ -133,6 +135,7 @@ class ConversationControl(BasePage):
                     scale=1,
                     size="sm",
                     elem_classes=["no-background", "body-text-color"],
+                    elem_id="btn-conv-delete",
                 )
                 self.btn_new = gr.Button(
                     value="",

@@ -26,11 +26,16 @@ class GraphRAGIndex(FileIndex):
         self, settings: dict, user_id: int, selected: Any = None
     ) -> list["BaseFileIndexRetriever"]:
         file_ids = self._selector_ui.get_selected_ids(selected)
-        retrievers = [
-            GraphRAGRetrieverPipeline(
-                file_ids=file_ids,
-                Index=self._resources["Index"],
-            )
-        ]
-
-        return retrievers
+        if not file_ids:
+            return []
+        retriever_cls = self._retriever_pipeline_cls[0]
+        try:
+            retrievers = [
+                retriever_cls(
+                    file_ids=file_ids,
+                    Index=self._resources["Index"],
+                )
+            ]
+            return retrievers
+        except Exception as e:
+            return []

@@ -61,8 +61,10 @@ class LCChatMixin:
         except Exception:
             pass
 
+        res_text = all_text[0] if len(all_text) > 0 else ""
         return LLMInterface(
-            text=all_text[0] if len(all_text) > 0 else "",
+            content=res_text,
+            text=res_text,
             candidates=all_text,
             completion_tokens=completion_tokens,
             total_tokens=total_tokens,
@@ -120,13 +122,15 @@ class LCChatMixin:
         self, messages: str | BaseMessage | list[BaseMessage], **kwargs
     ) -> Iterator[LLMInterface]:
         for response in self._obj.stream(input=messages, **kwargs):
-            yield LLMInterface(content=response.content)
+            content_str = response.content if isinstance(response.content, str) else str(response.content or "")
+            yield LLMInterface(content=content_str, text=content_str)
 
     async def astream(
         self, messages: str | BaseMessage | list[BaseMessage], **kwargs
     ) -> AsyncGenerator[LLMInterface, None]:
         async for response in self._obj.astream(input=messages, **kwargs):
-            yield LLMInterface(content=response.content)
+            content_str = response.content if isinstance(response.content, str) else str(response.content or "")
+            yield LLMInterface(content=content_str, text=content_str)
 
     def to_langchain_format(self):
         return self._obj

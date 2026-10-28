@@ -163,10 +163,14 @@ class LLMTrulensScoring(LLMReranking):
                 results.append(self.llm(messages).text)
 
         # use Boolean parser to extract relevancy output from LLM
-        results = [
-            (r_idx, float(re_0_10_rating(result)) / self.normalize)
-            for r_idx, result in enumerate(results)
-        ]
+        parsed_results = []
+        for r_idx, result in enumerate(results):
+            try:
+                score = float(re_0_10_rating(result)) / self.normalize
+            except Exception:
+                score = 0.5
+            parsed_results.append((r_idx, score))
+        results = parsed_results
         results.sort(key=lambda x: x[1], reverse=True)
 
         for r_idx, score in results:

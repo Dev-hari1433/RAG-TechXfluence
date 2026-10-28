@@ -8,7 +8,7 @@ function run() {
 
   const version_node = document.createElement("p");
   version_node.innerHTML = "version: KH_APP_VERSION";
-  version_node.style = "position: fixed; top: 10px; right: 10px;";
+  version_node.style = "position: fixed; top: 14px; right: 60px; font-size: 11px; opacity: 0.65; z-index: 90; margin: 0; pointer-events: none;";
   main_parent.appendChild(version_node);
 
   // add favicon
@@ -21,15 +21,19 @@ function run() {
 
   // setup conversation dropdown placeholder
   let conv_dropdown = document.querySelector("#conversation-dropdown input");
-  conv_dropdown.placeholder = "Browse conversation";
+  if (conv_dropdown) {
+    conv_dropdown.placeholder = "Browse conversation";
+  }
 
   // move info-expand-button
   let info_expand_button = document.getElementById("info-expand-button");
   let chat_info_panel = document.getElementById("info-expand");
-  chat_info_panel.insertBefore(
-    info_expand_button,
-    chat_info_panel.childNodes[2]
-  );
+  if (info_expand_button && chat_info_panel && chat_info_panel.childNodes.length > 2) {
+    chat_info_panel.insertBefore(
+      info_expand_button,
+      chat_info_panel.childNodes[2]
+    );
+  }
 
   // move toggle-side-bar button
   let chat_expand_button = document.getElementById("chat-expand-button");
@@ -39,55 +43,223 @@ function run() {
   // move setting close button
   let setting_tab_nav_bar = document.querySelector("#settings-tab .tab-nav");
   let setting_close_button = document.getElementById("save-setting-btn");
-  if (setting_close_button) {
+  if (setting_close_button && setting_tab_nav_bar) {
     setting_tab_nav_bar.appendChild(setting_close_button);
   }
 
-  let default_conv_column_min_width = "min(300px, 100%)";
-  conv_column.style.minWidth = default_conv_column_min_width;
+  // Clean SVG definitions for fallback
+  const ICON_SVGS = {
+    dark: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>`,
+    rename: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`,
+    delete: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`,
+    newChat: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+    expand: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`,
+  };
+
+  const savedTheme = localStorage.getItem("hariharan_theme");
+  if (savedTheme === "light") {
+    document.body.classList.remove("dark");
+    document.documentElement.classList.remove("dark");
+  } else if (savedTheme === "dark") {
+    document.body.classList.add("dark");
+    document.documentElement.classList.add("dark");
+  }
+
+  function fixIcons() {
+    const btnDark = document.getElementById("toggle-dark-button");
+    if (btnDark) {
+      btnDark.title = "Toggle Light / Dark Mode";
+      const img = btnDark.querySelector("img");
+      if (!img || img.naturalWidth === 0) {
+        btnDark.innerHTML = ICON_SVGS.dark;
+      }
+      if (!btnDark.dataset.hasThemeHandler) {
+        btnDark.dataset.hasThemeHandler = "true";
+        btnDark.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const isDark = document.body.classList.toggle("dark");
+          document.documentElement.classList.toggle("dark", isDark);
+          localStorage.setItem("hariharan_theme", isDark ? "dark" : "light");
+        }, true);
+      }
+    }
+    const btnNew = document.getElementById("new-conv-button");
+    if (btnNew) {
+      btnNew.title = "New conversation";
+      const img = btnNew.querySelector("img");
+      if (!img || img.naturalWidth === 0) {
+        btnNew.innerHTML = ICON_SVGS.newChat;
+      }
+    }
+    const btnRename = document.getElementById("btn-conv-rename");
+    if (btnRename) {
+      btnRename.title = "Rename conversation";
+      const img = btnRename.querySelector("img");
+      if (!img || img.naturalWidth === 0) {
+        btnRename.innerHTML = ICON_SVGS.rename;
+      }
+    }
+    const btnDel = document.getElementById("btn-conv-delete");
+    if (btnDel) {
+      btnDel.title = "Delete conversation";
+      const img = btnDel.querySelector("img");
+      if (!img || img.naturalWidth === 0) {
+        btnDel.innerHTML = ICON_SVGS.delete;
+      }
+    }
+    const btnInfo = document.getElementById("info-expand-button");
+    if (btnInfo) {
+      btnInfo.title = "Expand / Collapse Information Panel";
+      const img = btnInfo.querySelector("img");
+      if (!img || img.naturalWidth === 0) {
+        btnInfo.innerHTML = ICON_SVGS.expand;
+      }
+    }
+    const btnChat = document.getElementById("chat-expand-button");
+    if (btnChat) {
+      btnChat.title = "Toggle sidebar";
+      const img = btnChat.querySelector("img");
+      if (!img || img.naturalWidth === 0) {
+        btnChat.innerHTML = ICON_SVGS.expand;
+      }
+    }
+  }
+
+  fixIcons();
+  setInterval(fixIcons, 1000);
+
+  function setupSplitters() {
+    const convCol = document.getElementById("conv-settings-panel");
+    const chatArea = document.getElementById("chat-area");
+    const infoCol = document.getElementById("chat-info-panel");
+
+    if (!convCol || !chatArea || !infoCol) return;
+
+    // Resizer 1: between convCol and chatArea
+    if (!document.getElementById("resizer-left") && chatArea.parentNode) {
+      const resizerLeft = document.createElement("div");
+      resizerLeft.id = "resizer-left";
+      resizerLeft.className = "drag-resizer";
+      resizerLeft.title = "Drag to resize sidebar";
+      chatArea.parentNode.insertBefore(resizerLeft, chatArea);
+
+      let isDragging = false;
+      let startX = 0;
+      let startWidth = 0;
+
+      resizerLeft.addEventListener("mousedown", (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startWidth = convCol.getBoundingClientRect().width;
+        document.body.classList.add("is-resizing");
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const newWidth = Math.max(220, Math.min(600, startWidth + (e.clientX - startX)));
+        convCol.style.width = newWidth + "px";
+        convCol.style.minWidth = newWidth + "px";
+        convCol.style.maxWidth = newWidth + "px";
+        convCol.style.flex = "0 0 " + newWidth + "px";
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (isDragging) {
+          isDragging = false;
+          document.body.classList.remove("is-resizing");
+        }
+      });
+    }
+
+    // Resizer 2: between chatArea and infoCol
+    if (!document.getElementById("resizer-right") && infoCol.parentNode) {
+      const resizerRight = document.createElement("div");
+      resizerRight.id = "resizer-right";
+      resizerRight.className = "drag-resizer";
+      resizerRight.title = "Drag to resize Information Panel";
+      infoCol.parentNode.insertBefore(resizerRight, infoCol);
+
+      let isDraggingRight = false;
+      let startXRight = 0;
+      let startWidthRight = 0;
+
+      resizerRight.addEventListener("mousedown", (e) => {
+        isDraggingRight = true;
+        startXRight = e.clientX;
+        startWidthRight = infoCol.getBoundingClientRect().width;
+        document.body.classList.add("is-resizing");
+      });
+
+      document.addEventListener("mousemove", (e) => {
+        if (!isDraggingRight) return;
+        const newWidth = Math.max(260, Math.min(window.innerWidth * 0.65, startWidthRight - (e.clientX - startXRight)));
+        infoCol.style.width = newWidth + "px";
+        infoCol.style.minWidth = newWidth + "px";
+        infoCol.style.maxWidth = newWidth + "px";
+        infoCol.style.flex = "0 0 " + newWidth + "px";
+      });
+
+      document.addEventListener("mouseup", () => {
+        if (isDraggingRight) {
+          isDraggingRight = false;
+          document.body.classList.remove("is-resizing");
+        }
+      });
+    }
+  }
+
+  setTimeout(setupSplitters, 400);
+
+  let default_conv_column_width = "300px";
+  conv_column.style.width = default_conv_column_width;
+  conv_column.style.minWidth = default_conv_column_width;
+  conv_column.style.flex = "0 0 " + default_conv_column_width;
 
   globalThis.toggleChatColumn = () => {
-    /* get flex-grow value of chat_column */
-    let flex_grow = conv_column.style.flexGrow;
-    if (flex_grow == "0") {
-      conv_column.style.flexGrow = "1";
-      conv_column.style.minWidth = default_conv_column_min_width;
+    let isCollapsed = conv_column.style.display === "none" || conv_column.style.width === "0px";
+    if (isCollapsed) {
+      conv_column.style.display = "flex";
+      conv_column.style.width = default_conv_column_width;
+      conv_column.style.minWidth = default_conv_column_width;
+      conv_column.style.flex = "0 0 " + default_conv_column_width;
     } else {
-      conv_column.style.flexGrow = "0";
+      conv_column.style.width = "0px";
       conv_column.style.minWidth = "0px";
+      conv_column.style.display = "none";
     }
   };
 
   chat_column.insertBefore(chat_expand_button, chat_column.firstChild);
 
-  // move use mind-map checkbox
-  let mindmap_checkbox = document.getElementById("use-mindmap-checkbox");
-  let citation_dropdown = document.getElementById("citation-dropdown");
-  let chat_setting_panel = document.getElementById("chat-settings-expand");
-  chat_setting_panel.insertBefore(
-    mindmap_checkbox,
-    chat_setting_panel.childNodes[2]
-  );
-  chat_setting_panel.insertBefore(citation_dropdown, mindmap_checkbox);
+  // mindmap and citation are placed in quick-setting-controls grid natively
 
   // move share conv checkbox
   let report_div = document.querySelector(
     "#report-accordion > div:nth-child(3) > div:nth-child(1)"
   );
   let share_conv_checkbox = document.getElementById("is-public-checkbox");
-  if (share_conv_checkbox) {
-    report_div.insertBefore(share_conv_checkbox, report_div.querySelector("button"));
+  if (share_conv_checkbox && report_div) {
+    let report_btn = report_div.querySelector("button");
+    if (report_btn) {
+      report_div.insertBefore(share_conv_checkbox, report_btn);
+    }
   }
 
-  // create slider toggle
+  // create slider toggle safely
   const is_public_checkbox = document.getElementById("suggest-chat-checkbox");
-  const label_element = is_public_checkbox.getElementsByTagName("label")[0];
-  const checkbox_span = is_public_checkbox.getElementsByTagName("span")[0];
-  new_div = document.createElement("div");
-
-  label_element.classList.add("switch");
-  is_public_checkbox.appendChild(checkbox_span);
-  label_element.appendChild(new_div);
+  if (is_public_checkbox) {
+    const labels = is_public_checkbox.getElementsByTagName("label");
+    const spans = is_public_checkbox.getElementsByTagName("span");
+    if (labels.length > 0 && spans.length > 0) {
+      const label_element = labels[0];
+      const checkbox_span = spans[0];
+      const new_div = document.createElement("div");
+      label_element.classList.add("switch");
+      is_public_checkbox.appendChild(checkbox_span);
+      label_element.appendChild(new_div);
+    }
+  }
 
   // clpse
   globalThis.clpseFn = (id) => {

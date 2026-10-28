@@ -306,7 +306,8 @@ class ChatPage(BasePage):
                         )
 
                 if not KH_DEMO_MODE:
-                    self.report_issue = ReportIssue(self._app)
+                    # Feedback / Report section removed
+                    self.report_issue = None
                 else:
                     with gr.Accordion(label="Related papers", open=False):
                         self.related_papers = gr.Markdown(elem_id="related-papers")
@@ -317,80 +318,77 @@ class ChatPage(BasePage):
                 if KH_DEMO_MODE:
                     self.paper_list = PaperListPage(self._app)
 
-                self.chat_panel = ChatPanel(self._app)
-
                 with gr.Accordion(
                     label="Chat settings",
                     elem_id="chat-settings-expand",
                     open=False,
                     visible=not KH_DEMO_MODE,
                 ) as self.chat_settings:
-                    with gr.Row(elem_id="quick-setting-labels"):
-                        gr.HTML("Reasoning method")
-                        gr.HTML(
-                            "Model", visible=not KH_DEMO_MODE and not KH_SSO_ENABLED
-                        )
-                        gr.HTML("Language")
+                    reasoning_setting = (
+                        self._app.default_settings.reasoning.settings["use"]
+                    )
+                    model_setting = self._app.default_settings.reasoning.options[
+                        "simple"
+                    ].settings["llm"]
+                    language_setting = (
+                        self._app.default_settings.reasoning.settings["lang"]
+                    )
+                    citation_setting = self._app.default_settings.reasoning.options[
+                        "simple"
+                    ].settings["highlight_citation"]
 
-                    with gr.Row():
-                        reasoning_setting = (
-                            self._app.default_settings.reasoning.settings["use"]
-                        )
-                        model_setting = self._app.default_settings.reasoning.options[
-                            "simple"
-                        ].settings["llm"]
-                        language_setting = (
-                            self._app.default_settings.reasoning.settings["lang"]
-                        )
-                        citation_setting = self._app.default_settings.reasoning.options[
-                            "simple"
-                        ].settings["highlight_citation"]
-
+                    with gr.Row(elem_id="quick-setting-controls"):
                         self.reasoning_type = gr.Dropdown(
+                            label="Reasoning Method",
                             choices=reasoning_setting.choices[:REASONING_LIMITS],
                             value=reasoning_setting.value,
-                            container=False,
-                            show_label=False,
+                            container=True,
+                            scale=3,
                         )
                         self.model_type = gr.Dropdown(
+                            label="Model",
                             choices=model_setting.choices,
                             value=model_setting.value,
-                            container=False,
-                            show_label=False,
+                            container=True,
                             visible=not KH_DEMO_MODE and not KH_SSO_ENABLED,
+                            scale=3,
                         )
                         self.language = gr.Dropdown(
+                            label="Language",
                             choices=language_setting.choices,
                             value=language_setting.value,
-                            container=False,
-                            show_label=False,
+                            container=True,
+                            scale=2,
                         )
-
                         self.citation = gr.Dropdown(
+                            label="Citation Style",
                             choices=citation_setting.choices,
                             value=citation_setting.value,
-                            container=False,
-                            show_label=False,
+                            container=True,
                             interactive=True,
                             elem_id="citation-dropdown",
+                            scale=2,
                         )
-
                         if not config("USE_LOW_LLM_REQUESTS", default=False, cast=bool):
                             self.use_mindmap = gr.State(value=True)
                             self.use_mindmap_check = gr.Checkbox(
                                 label="Mindmap (on)",
-                                container=False,
+                                container=True,
                                 elem_id="use-mindmap-checkbox",
                                 value=True,
+                                scale=2,
                             )
                         else:
                             self.use_mindmap = gr.State(value=False)
                             self.use_mindmap_check = gr.Checkbox(
                                 label="Mindmap (off)",
-                                container=False,
+                                container=True,
                                 elem_id="use-mindmap-checkbox",
                                 value=False,
+                                scale=2,
                             )
+
+                self.chat_panel = ChatPanel(self._app)
 
             with gr.Column(
                 scale=INFO_PANEL_SCALES[False], elem_id="chat-info-panel"
@@ -400,7 +398,16 @@ class ChatPage(BasePage):
                 ):
                     self.modal = gr.HTML("<div id='pdf-modal'></div>")
                     self.plot_panel = gr.Plot(visible=False)
-                    self.info_panel = gr.HTML(elem_id="html-info-panel")
+                    self.info_panel = gr.HTML(
+                        value=(
+                            "<div class='info-panel-welcome'>"
+                            "<div class='info-welcome-badge'>EVIDENCE & CITATIONS</div>"
+                            "<h3 class='info-welcome-title'>Information Panel</h3>"
+                            "<p class='info-welcome-text'>Supporting evidence, source citations, relevance scores, and entity graphs will appear here when you chat.</p>"
+                            "</div>"
+                        ),
+                        elem_id="html-info-panel",
+                    )
 
         self.followup_questions = self.chat_suggestion.examples
         self.followup_questions_ui = self.chat_suggestion.accordion
@@ -796,22 +803,23 @@ class ChatPage(BasePage):
                 inputs=[self.chat_control.conversation_id],
                 outputs=None,
             )
-            self.report_issue.report_btn.click(
-                self.report_issue.report,
-                inputs=[
-                    self.report_issue.correctness,
-                    self.report_issue.issues,
-                    self.report_issue.more_detail,
-                    self.chat_control.conversation_id,
-                    self.chat_panel.chatbot,
-                    self._app.settings_state,
-                    self._app.user_id,
-                    self.info_panel,
-                    self.state_chat,
-                ]
-                + self._indices_input,
-                outputs=None,
-            )
+            if self.report_issue is not None:
+                self.report_issue.report_btn.click(
+                    self.report_issue.report,
+                    inputs=[
+                        self.report_issue.correctness,
+                        self.report_issue.issues,
+                        self.report_issue.more_detail,
+                        self.chat_control.conversation_id,
+                        self.chat_panel.chatbot,
+                        self._app.settings_state,
+                        self._app.user_id,
+                        self.info_panel,
+                        self.state_chat,
+                    ]
+                    + self._indices_input,
+                    outputs=None,
+                )
 
         self.reasoning_type.change(
             self.reasoning_changed,

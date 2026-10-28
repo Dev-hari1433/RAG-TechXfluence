@@ -1,4 +1,8 @@
 import os
+import gradio.routes
+
+# Enable SVG rendering in Gradio
+gradio.routes.XSS_SAFE_MIMETYPES.add("image/svg+xml")
 
 from theflow.settings import settings as flowsettings
 
@@ -15,12 +19,13 @@ from ktem.main import App  # noqa
 
 app = App()
 demo = app.make()
+demo.title = app.app_name
 demo.queue().launch(
     favicon_path=app._favicon,
-    inbrowser=True,
+    inbrowser=False,
     allowed_paths=[
-        "libs/ktem/ktem/assets",
-        GRADIO_TEMP_DIR,
+        os.path.abspath("libs/ktem/ktem/assets"),
+        os.path.abspath(GRADIO_TEMP_DIR),
     ],
     share=KH_GRADIO_SHARE,
 )

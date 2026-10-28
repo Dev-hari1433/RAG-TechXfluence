@@ -84,14 +84,64 @@ button.selected {
   margin: 0 auto !important;
 }
 
-#main-chat-bot {
-  background: var(--background-fill-primary);
-  flex: auto;
-}
-
 #chat-area {
   height: var(--main-area-height) !important;
-  column-gap: 2px !important;
+  max-height: var(--main-area-height) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex-wrap: nowrap !important;
+  overflow: hidden !important;
+  column-gap: 0 !important;
+  row-gap: 4px !important;
+  position: relative !important;
+}
+
+#chat-settings-expand {
+  flex-shrink: 0 !important;
+  max-height: 160px !important;
+  overflow-y: auto !important;
+  margin: 2px 0 4px 0 !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--border-color-primary) !important;
+  background: var(--background-fill-secondary) !important;
+}
+
+#chat-settings-expand > .label-wrap {
+  padding: 4px 10px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+#quick-setting-controls {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 6px !important;
+  align-items: flex-start !important;
+  padding: 4px 6px !important;
+}
+
+#quick-setting-controls > div {
+  margin-bottom: 2px !important;
+}
+
+#main-chat-bot {
+  background: var(--background-fill-primary);
+  flex: 1 1 0 !important;
+  min-height: 80px !important;
+  overflow-y: auto !important;
+}
+
+#main-chat-bot .wrapper,
+#main-chat-bot .bubble-wrap {
+  min-height: 0 !important;
+}
+
+#chat-input-row {
+  flex-shrink: 0 !important;
+  width: 100% !important;
+  margin: 4px 0 2px 0 !important;
+  position: relative !important;
+  z-index: 10 !important;
 }
 
 #chat-info-panel {
@@ -194,8 +244,21 @@ mark {
 
 #toggle-dark-button {
   position: fixed;
-  top: 6px;
-  right: 30px;
+  top: 8px;
+  right: 16px;
+  z-index: 100;
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+  height: 34px !important;
+  padding: 4px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--background-fill-secondary);
+  border: 1px solid var(--border-color-primary);
+  cursor: pointer;
 }
 
 #info-expand-button {
@@ -211,9 +274,11 @@ mark {
 
 #chat-expand-button {
   position: absolute;
-  top: 6px;
-  right: -10px;
-  z-index: 1;
+  top: 8px;
+  left: 10px;
+  z-index: 10;
+  border-radius: 6px;
+  padding: 4px;
 }
 
 #save-setting-btn {
@@ -228,18 +293,16 @@ mark {
 }
 
 #use-mindmap-checkbox {
-  position: absolute;
-  width: 110px;
-  top: 10px;
-  right: 25px;
+  position: static !important;
+  width: auto !important;
+  margin: 0 !important;
 }
 
 #citation-dropdown {
-  width: min(25%, 100px);
-  position: absolute;
-  top: 2px;
-  left: 120px;
-  height: 35px;
+  position: static !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
 }
 
 #quick-url textarea {
@@ -260,8 +323,111 @@ span.icon {
   color: #cecece;
 }
 
+/* Drag resizer bars for flexible panel sizing */
+.drag-resizer {
+  width: 6px;
+  min-width: 6px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  transition: background 0.15s ease;
+  z-index: 10;
+  user-select: none;
+  align-self: stretch;
+  height: var(--main-area-height);
+}
+
+.drag-resizer:hover, .drag-resizer:active {
+  background: #10b981 !important;
+}
+
+.drag-resizer::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 2px;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 40px;
+  background: var(--border-color-primary, #94a3b8);
+  border-radius: 2px;
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.drag-resizer:hover::after {
+  opacity: 1;
+  background: #ffffff;
+}
+
+body.is-resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+/* Button icons display fix */
+img.button-icon {
+  width: 18px !important;
+  height: 18px !important;
+  object-fit: contain !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+/* Buttons styling */
+#btn-conv-rename, #btn-conv-delete, #new-conv-button {
+  padding: 4px 6px !important;
+  min-width: 28px !important;
+  border-radius: 6px !important;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+#btn-conv-rename:hover, #btn-conv-delete:hover, #new-conv-button:hover {
+  background-color: var(--border-color-secondary) !important;
+  transform: scale(1.08);
+}
+
+/* Information Panel Welcome card */
+.info-panel-welcome {
+  padding: 30px 16px;
+  text-align: center;
+  background: var(--background-fill-secondary);
+  border: 1px dashed var(--border-color-primary);
+  border-radius: 12px;
+  margin: 10px 4px;
+}
+
+.info-welcome-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.12);
+  padding: 3px 8px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+
+.info-welcome-title {
+  margin: 0 0 6px 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--body-text-color);
+}
+
+.info-welcome-text {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--body-text-color-subdued);
+  margin: 0 auto;
+  max-width: 260px;
+}
+
 .upload-button {
-  display: none;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .scrollable {

@@ -5,17 +5,17 @@ from gradio.themes.utils import colors, fonts, sizes
 
 gray = colors.Color(
     name="dark",
-    c50="#f9fafb",
-    c100="#edeef0",
-    c200="#e1e2e6",
-    c300="#d5d6dd",
-    c400="#cacbd5",
-    c500="#acadb7",
-    c600="#313138",
-    c700="#25252b",
-    c800="#19191e",
-    c900="#0d0d11",
-    c950="#010104",
+    c50="#f8fafc",
+    c100="#f1f5f9",
+    c200="#e2e8f0",
+    c300="#cbd5e1",
+    c400="#94a3b8",
+    c500="#64748b",
+    c600="#334155",
+    c700="#1e293b",
+    c800="#0f172a",
+    c900="#0b1120",
+    c950="#090d16",
 )
 
 err_txt = "#f05656"

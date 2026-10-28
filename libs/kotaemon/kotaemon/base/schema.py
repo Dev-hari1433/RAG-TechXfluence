@@ -54,7 +54,7 @@ class Document(BaseDocument):
             temp_.update(kwargs)
             kwargs = temp_
         else:
-            kwargs["content"] = content
+            kwargs["content"] = content if content is not None else ""
             if content:
                 kwargs["text"] = str(content)
             else:
@@ -104,16 +104,31 @@ class BaseMessage(Document):
 
 
 class SystemMessage(BaseMessage, LCSystemMessage):
+    def __init__(self, content: Any = None, *args, **kwargs):
+        if content is None:
+            content = kwargs.get("content", kwargs.get("text", "")) or ""
+        BaseMessage.__init__(self, content, *args, **kwargs)
+
     def to_openai_format(self) -> "ChatCompletionMessageParam":
         return {"role": "system", "content": self.content}
 
 
 class AIMessage(BaseMessage, LCAIMessage):
+    def __init__(self, content: Any = None, *args, **kwargs):
+        if content is None:
+            content = kwargs.get("content", kwargs.get("text", "")) or ""
+        BaseMessage.__init__(self, content, *args, **kwargs)
+
     def to_openai_format(self) -> "ChatCompletionMessageParam":
         return {"role": "assistant", "content": self.content}
 
 
 class HumanMessage(BaseMessage, LCHumanMessage):
+    def __init__(self, content: Any = None, *args, **kwargs):
+        if content is None:
+            content = kwargs.get("content", kwargs.get("text", "")) or ""
+        BaseMessage.__init__(self, content, *args, **kwargs)
+
     def to_openai_format(self) -> "ChatCompletionMessageParam":
         return {"role": "user", "content": self.content}
 

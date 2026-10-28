@@ -3,8 +3,9 @@ FROM ghcr.io/cinnamon/kotaemon:main-full as base_image
 
 USER root
 RUN useradd -m -u 1000 user || true
+RUN rm -rf /install && ln -s /usr/local /install || true
+RUN chmod -R a+rX /usr/local || true
 RUN chown -R user:user /app || true
-RUN chown -R user:user /usr/local/lib/python3.10 || true
 
 WORKDIR /app
 COPY --chown=user:user . /app

@@ -20,7 +20,13 @@ from ktem.main import App  # noqa
 app = App()
 demo = app.make()
 demo.title = app.app_name
+
+server_name = os.environ.get("GRADIO_SERVER_NAME", "0.0.0.0")
+server_port = int(os.environ.get("PORT", os.environ.get("GRADIO_SERVER_PORT", 7860)))
+
 demo.queue().launch(
+    server_name=server_name,
+    server_port=server_port,
     favicon_path=app._favicon,
     inbrowser=False,
     allowed_paths=[

@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools >= 61.0", "wheel", "setuptools-git-versioning>=2.0,<3"]
+requires = ["setuptools >= 61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -7,15 +7,10 @@ include-package-data = true
 packages.find.exclude = ["ktem_tests*", "env*"]
 packages.find.include = ["ktem*"]
 
-[tool.setuptools-git-versioning]
-enabled = true
-dev_template = "{tag}"
-dirty_template = "{tag}"
-tag_filter = "v?\\d+(\\.\\d+)*.*"
 
 [project]
 name = "ktem"
-dynamic = ["version"]
+version = "0.12.0"
 requires-python = ">= 3.10"
 description = "RAG-based Question and Answering Application"
 dependencies = [
